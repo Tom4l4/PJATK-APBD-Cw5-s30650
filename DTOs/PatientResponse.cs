@@ -5,7 +5,7 @@ public record PatientResponse(
     string FirstName,
     string LastName,
     int Age,
-    bool Sex,
+    string Sex,
     IEnumerable<object> Admissions,
     IEnumerable<object> BedAssignments
     );

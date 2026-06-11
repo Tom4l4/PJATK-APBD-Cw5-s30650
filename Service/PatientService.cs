@@ -23,7 +23,7 @@ public class PatientService(HospitalContext ctx) : IPatientService
             p.FirstName,
             p.LastName,
             p.Age,
-            p.Sex,
+            p.Sex ? "Male" : "Female",
             p.Admissions.Select(a => new AdmissionResponse(
                 a.Id,
                 a.AdmissionDate,
@@ -58,7 +58,7 @@ public class PatientService(HospitalContext ctx) : IPatientService
             ))
         )).ToListAsync(cancellationToken);
     }
-    
+
     public async Task AssignBedAsync(string pesel, AssignBedRequest request, CancellationToken cancellationToken)
     {
         var patientExists = await ctx.Patients
@@ -69,7 +69,21 @@ public class PatientService(HospitalContext ctx) : IPatientService
             throw new NotFoundException($"Patient with pesel {pesel} not found");
         }
 
-        var requestedTo = request.To ?? DateTime.MaxValue;
+        var wardExists = await ctx.Wards
+            .AnyAsync(w => w.Name == request.Ward, cancellationToken);
+
+        if (!wardExists)
+        {
+            throw new NotFoundException($"Ward {request.Ward} not found");
+        }
+
+        var bedTypeExists = await ctx.BedTypes
+            .AnyAsync(bt => bt.Name == request.BedType, cancellationToken);
+
+        if (!bedTypeExists)
+        {
+            throw new NotFoundException($"Bed type {request.BedType} not found");
+        }
 
         var bed = await ctx.Beds
             .Where(b =>
